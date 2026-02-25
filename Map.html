@@ -1,0 +1,1302 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Seoul Pro Guide | 首爾搵食與生存神器</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+HK:wght@400;500;700;900&display=swap');
+        
+        :root {
+            --app-bg: #f2f2f7; /* iOS standard background */
+            --naver-hover: #02b350;
+        }
+
+        body {
+            font-family: 'Noto Sans HK', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--app-bg);
+            -webkit-tap-highlight-color: transparent;
+            padding-bottom: 90px;
+        }
+
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Card Interactions */
+        .app-card {
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+            overflow: hidden;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .app-card-active:active { transform: scale(0.98); }
+        
+        /* Glass Header */
+        .glass-header {
+            background: rgba(242, 242, 247, 0.95);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        /* Sticky Section Headers for Itinerary */
+        .sticky-section-header {
+            position: sticky;
+            top: 140px; 
+            z-index: 30;
+            background: rgba(242, 242, 247, 0.95);
+            backdrop-filter: blur(8px);
+        }
+
+        /* Toast Animation */
+        #toast {
+            transition: opacity 0.3s, transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform: translateY(100px);
+            opacity: 0;
+            z-index: 100;
+        }
+        #toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        /* iOS Bottom Sheet */
+        .bottom-sheet-overlay {
+            background: rgba(0, 0, 0, 0.4);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s;
+            z-index: 1000;
+        }
+        .bottom-sheet {
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+            z-index: 1001;
+        }
+        .bottom-sheet.open {
+            transform: translateY(0);
+        }
+        .bottom-sheet-overlay.open {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Custom Input styling for Boarding Pass */
+        .ticket-input {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            color-scheme: dark;
+        }
+        .ticket-input:focus { outline: none; border-color: rgba(255,255,255,0.8); background: rgba(255,255,255,0.2); }
+        .ticket-input::-webkit-calendar-picker-indicator { filter: invert(1); }
+    </style>
+</head>
+<body class="antialiased text-gray-800">
+
+    <header class="glass-header fixed top-0 w-full z-40 border-b border-gray-200/60 pb-3 pt-safe pt-4 md:pt-6 transition-all duration-300" id="app-header">
+        <div class="max-w-4xl mx-auto px-4">
+            <div class="flex justify-between items-center mb-4">
+                <div>
+                    <h1 class="text-2xl font-black text-gray-900 tracking-tight" id="headerTitle">首爾行前準備 📝</h1>
+                    <p class="text-xs font-medium text-gray-500 mt-0.5 tracking-wide uppercase" id="headerSub">Trip Dashboard</p>
+                </div>
+                <div class="text-right" id="headerRight" style="display: none;">
+                    <span class="text-xs font-bold text-gray-400" id="headerCount">Total Places</span>
+                </div>
+            </div>
+
+            <!-- Search Bar -->
+            <div id="searchContainer" class="relative mb-3 transition-all" style="display: none;">
+                <i data-lucide="search" class="absolute left-4 top-3.5 w-5 h-5 text-gray-400"></i>
+                <input type="text" id="searchInput" placeholder="搜尋餐廳、店舖、區域..." 
+                    class="w-full bg-white text-gray-900 placeholder-gray-500 text-base rounded-2xl pl-11 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-200 shadow-sm transition-all">
+            </div>
+
+            <!-- Filters -->
+            <div class="flex overflow-x-auto hide-scrollbar gap-2 -mx-4 px-4 pb-1" id="categoryFilters" style="display: none;">
+                <!-- Javascript populates this -->
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="max-w-4xl mx-auto px-4 pt-32 pb-6 transition-all duration-300" id="main-content">
+        <!-- Javascript populates content here -->
+    </main>
+
+    <!-- App Bottom Navigation -->
+    <nav class="fixed bottom-0 w-full bg-white/95 backdrop-blur-md border-t border-gray-200 pb-safe pt-2 px-1 z-50 overflow-x-auto hide-scrollbar">
+        <div class="min-w-max mx-auto flex justify-around items-center pb-2 px-2 gap-4">
+            <button onclick="switchTab('home')" id="nav-home" class="flex flex-col items-center text-blue-600 w-14 transition-colors shrink-0">
+                <i data-lucide="plane" class="w-6 h-6 mb-1"></i>
+                <span class="text-[10px] font-bold mt-1">主頁</span>
+            </button>
+            <button onclick="switchTab('explore')" id="nav-explore" class="flex flex-col items-center text-gray-400 hover:text-gray-600 w-14 transition-colors shrink-0">
+                <i data-lucide="compass" class="w-6 h-6 mb-1"></i>
+                <span class="text-[10px] font-bold mt-1">搵食</span>
+            </button>
+            <button onclick="switchTab('shopping')" id="nav-shopping" class="flex flex-col items-center text-gray-400 hover:text-gray-600 w-14 transition-colors shrink-0">
+                <i data-lucide="shopping-bag" class="w-6 h-6 mb-1"></i>
+                <span class="text-[10px] font-bold mt-1">購物</span>
+            </button>
+            <button onclick="switchTab('areas')" id="nav-areas" class="flex flex-col items-center text-gray-400 hover:text-gray-600 w-14 transition-colors shrink-0">
+                <i data-lucide="map" class="w-6 h-6 mb-1"></i>
+                <span class="text-[10px] font-bold mt-1">地區</span>
+            </button>
+            <button onclick="switchTab('hacks')" id="nav-hacks" class="flex flex-col items-center text-gray-400 hover:text-gray-600 w-14 transition-colors shrink-0">
+                <i data-lucide="lightbulb" class="w-6 h-6 mb-1"></i>
+                <span class="text-[10px] font-bold mt-1">攻略</span>
+            </button>
+            <button onclick="switchTab('saved')" id="nav-saved" class="flex flex-col items-center text-gray-400 hover:text-gray-600 w-14 transition-colors shrink-0 relative">
+                <i data-lucide="calendar-heart" class="w-6 h-6 mb-1"></i>
+                <span class="text-[10px] font-bold mt-1">行程</span>
+                <span id="savedBadge" class="absolute -top-1 right-1 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full hidden shadow-sm border border-white">0</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- iOS Style Bottom Sheet for Day Assignment -->
+    <div id="bottomSheetOverlay" class="bottom-sheet-overlay fixed inset-0" onclick="closeDaySelector()"></div>
+    <div id="bottomSheet" class="bottom-sheet fixed bottom-0 left-0 w-full bg-white rounded-t-3xl shadow-2xl pb-safe">
+        <div class="p-6">
+            <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6"></div>
+            <h3 class="text-lg font-black text-center mb-4 text-gray-900">安排至哪一天？(Assign Day)</h3>
+            <div id="sheetOptions" class="space-y-3 max-h-[50vh] overflow-y-auto hide-scrollbar">
+                <!-- JS populated -->
+            </div>
+            <button onclick="closeDaySelector()" class="w-full mt-4 bg-gray-100 text-gray-700 font-bold py-3.5 rounded-xl">取消 Cancel</button>
+        </div>
+    </div>
+
+    <!-- Enhanced Modal for Adding Custom Shop -->
+    <div id="addShopModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[1100] hidden items-center justify-center p-4 opacity-0 transition-opacity">
+        <div class="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden transform scale-95 transition-transform max-h-[90vh] flex flex-col" id="addShopModalContent">
+            <div class="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50 flex-shrink-0">
+                <h3 class="text-xl font-black text-gray-900 flex items-center"><i data-lucide="store" class="w-5 h-5 mr-2 text-pink-500"></i> 新增購物/景點</h3>
+                <button onclick="closeAddShopModal()" class="text-gray-400 hover:text-gray-600 bg-white p-1.5 rounded-full shadow-sm"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            
+            <div class="p-6 space-y-4 overflow-y-auto hide-scrollbar flex-grow">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">店舖名稱 (Name)</label>
+                    <input type="text" id="newShopName" placeholder="例如: Musinsa, 景福宮..." class="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold shadow-sm mb-2">
+                    
+                    <div class="flex gap-2">
+                        <button onclick="autoFillShop()" class="flex-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold py-2 rounded-lg text-xs flex items-center justify-center transition border border-indigo-100 active:scale-95">
+                            <i data-lucide="wand-2" class="w-3.5 h-3.5 mr-1.5"></i> 智能填寫
+                        </button>
+                        <button onclick="searchShopWeb()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2 rounded-lg text-xs flex items-center justify-center transition active:scale-95">
+                            <i data-lucide="search" class="w-3.5 h-3.5 mr-1.5"></i> Google 搜尋
+                        </button>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">韓文名稱/搜尋字 (供地圖導航)</label>
+                    <input type="text" id="newShopKor" placeholder="例如: 무신사" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">分類 (Category)</label>
+                        <select id="newShopCat" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold">
+                            <option value="women">女裝 (Women's)</option>
+                            <option value="men">男裝 (Men's)</option>
+                            <option value="unisex">男女裝 (Unisex)</option>
+                            <option value="beauty">美妝 (Beauty)</option>
+                            <option value="other">景點/配件 (Other)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">地區 (Area)</label>
+                        <input type="text" id="newShopArea" placeholder="例如: 弘大, 聖水..." class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">排隊/等待時間</label>
+                        <input type="text" id="newShopWait" placeholder="例如: 0m, 10-20m" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">預約方式</label>
+                        <input type="text" id="newShopBook" placeholder="例如: Walk-in" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">必買/必看重點 (Must Do)</label>
+                    <input type="text" id="newShopNote" placeholder="例如: 街頭風T恤, 必買精華液..." class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-blue-700 font-bold">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1">個人備註 (Remarks)</label>
+                    <input type="text" id="newShopRemark" placeholder="任何提醒自己的事..." class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-600">
+                </div>
+            </div>
+            <div class="p-5 border-t border-gray-100 flex-shrink-0 bg-white">
+                <button onclick="saveCustomShop()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-xl shadow-lg transition active:scale-95 flex justify-center items-center">
+                    <i data-lucide="plus-circle" class="w-5 h-5 mr-2"></i> 建立並加入清單
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for WhatsApp Share Code -->
+    <div id="shareModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[1100] hidden items-center justify-center p-4 opacity-0 transition-opacity">
+        <div class="bg-white rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden transform scale-95 transition-transform" id="shareModalContent">
+            <div class="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                <h3 class="text-lg font-black text-gray-900 flex items-center"><i data-lucide="share" class="w-5 h-5 mr-2 text-blue-500"></i> 導出行程表</h3>
+                <button onclick="closeShareModal()" class="text-gray-400 hover:text-gray-600 bg-white p-1.5 rounded-full shadow-sm"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <button onclick="shareItineraryText()" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-3.5 rounded-xl shadow-sm transition active:scale-95 flex justify-center items-center">
+                    <i data-lucide="copy" class="w-5 h-5 mr-2"></i> 複製純文字 (Copy Text)
+                </button>
+                <button onclick="shareItineraryWhatsApp()" class="w-full bg-[#25D366] hover:bg-[#1ebd59] text-white font-bold py-3.5 rounded-xl shadow-md transition active:scale-95 flex justify-center items-center">
+                    <i data-lucide="message-circle" class="w-5 h-5 mr-2"></i> 發送至 WhatsApp
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-gray-900/95 backdrop-blur text-white px-5 py-3 rounded-2xl shadow-xl flex items-center gap-3 pointer-events-none">
+        <i data-lucide="check-circle" class="w-5 h-5 text-green-400" id="toastIcon"></i>
+        <span id="toastMsg" class="text-sm font-bold">已複製 (Copied)</span>
+    </div>
+
+    <script>
+        // --- DATA LAYER ---
+        // Food Database
+        const db = [
+            { id: 1, kor: "금돼지식당", eng: "Geumdwaeji Sikdang", canto: "金豬食堂", locCanto: "中區", locEng: "Jung-gu", famCanto: "頂級帶骨五花肉 (YBD豬)", famEng: "Premium Pork Belly", cat: "烤肉", catId: "bbq", wait: "1-2h", waitLvl: "high", book: "CatchTable 網頁", remarkCanto: "米其林推薦。務必用 App 提早抽號碼牌，專人代烤。", area: "Central" },
+            { id: 2, kor: "남영동양문", eng: "Namyeongdong Yangmun", canto: "南營洞洋門", locCanto: "南營/弘大", locEng: "Namyeong/Hongdae", famCanto: "在地粗獷帶骨牛小排", famEng: "Rough Beef Short Ribs", cat: "烤肉", catId: "bbq", wait: "0-20m", waitLvl: "low", book: "CatchTable 網頁", remarkCanto: "CP值極高，點肉免費送解酒湯與冷麵。", area: "Hongdae" },
+            { id: 3, kor: "육전식당", eng: "Yukjeon Sikdang", canto: "肉典食堂", locCanto: "新設洞", locEng: "Sinseol-dong", famCanto: "超厚切烤豬五花", famEng: "Thick Grilled Pork", cat: "烤肉", catId: "bbq", wait: "15-30m", waitLvl: "med", book: "CatchTable 網頁", remarkCanto: "韓國厚切豬肉始祖，店員執行完美的「剪肉物理學」。", area: "Dongdaemun" },
+            { id: 4, kor: "도마", eng: "Doma", canto: "Doma 燒肉", locCanto: "弘大", locEng: "Hongdae", famCanto: "和牛與麻藥大醬湯", famEng: "Wagyu & Soybean Stew", cat: "烤肉 & 燉湯", catId: "bbq", wait: "10-20m", waitLvl: "low", book: "CatchTable 網頁", remarkCanto: "避開主街觀光客。麻藥大醬湯極致下飯。", area: "Hongdae" },
+            { id: 5, kor: "은주정", eng: "Eunjujeong", canto: "銀珠亭", locCanto: "乙支路", locEng: "Euljiro", famCanto: "泡菜鍋(午)/烤肉(晚)", famEng: "Kimchi Stew / BBQ", cat: "鍋物", catId: "stew", wait: "0-10m", waitLvl: "low", book: "Walk-in Only", remarkCanto: "無言交涉：晚上沒菜單，坐下比人數。先吃烤肉再吃鍋。", area: "Euljiro" },
+            { id: 6, kor: "동원집", eng: "Dongwonjip", canto: "東元屋", locCanto: "乙支路", locEng: "Euljiro", famCanto: "薯仔排骨湯", famEng: "Pork Bone Potato Stew", cat: "燉湯", catId: "stew", wait: "0-15m", waitLvl: "low", book: "Walk-in", remarkCanto: "阿叔飯堂。肉燉到骨肉分離，一個人也可以吃。", area: "Euljiro" },
+            { id: 7, kor: "청진옥", eng: "Cheong Jin Ok", canto: "清進屋", locCanto: "鐘路", locEng: "Jongno", famCanto: "牛血牛骨解酒湯", famEng: "Ox Blood Hangover Soup", cat: "燉湯", catId: "stew", wait: "0m", waitLvl: "low", book: "24H Walk-in", remarkCanto: "24小時營業，整棟樓都是，地道靈魂美食。", area: "Jongno" },
+            { id: 8, kor: "광화문국밥", eng: "Gwanghwamun Gukbap", canto: "光化門湯飯", locCanto: "光化門", locEng: "Gwanghwamun", famCanto: "清湯豬肉湯飯", famEng: "Clear Pork Soup Rice", cat: "湯飯", catId: "meal", wait: "5-15m", waitLvl: "low", book: "Walk-in", remarkCanto: "米其林推薦。地道白領的高效午餐。", area: "Central" },
+            { id: 9, kor: "호수삼계탕", eng: "Hosu Samgyetang", canto: "湖水蔘雞湯", locCanto: "永登浦", locEng: "Yeongdeungpo", famCanto: "紫蘇籽濃郁蔘雞湯", famEng: "Perilla Ginseng Soup", cat: "湯飯", catId: "stew", wait: "0-15m", waitLvl: "low", book: "Walk-in", remarkCanto: "湯底濃郁似法式濃湯，生黃瓜沾辣醬是絕配。", area: "Yeouido" },
+            { id: 10, kor: "크레이지카츠", eng: "Crazy Katsu", canto: "Crazy 炸豬排", locCanto: "合井", locEng: "Hapjeong", famCanto: "頂級厚切炸豬排", famEng: "Premium Tonkatsu", cat: "正餐", catId: "meal", wait: "20-40m", waitLvl: "med", book: "CatchTable 網頁", remarkCanto: "弘大神店。肉汁鎖死在炸粉內，必須抽號碼牌。", area: "Hongdae" },
+            { id: 11, kor: "조조칼국수", eng: "Jojo Kalguksu", canto: "早早刀削麵", locCanto: "聖水/市廳", locEng: "Seongsu", famCanto: "蛤蜊刀削麵/海鮮煎餅", famEng: "Clam Noodle/Pancake", cat: "麵食", catId: "meal", wait: "10-20m", waitLvl: "low", book: "CatchTable 網頁", remarkCanto: "翻桌極快。煎餅上海鮮多到看不見粉漿。", area: "Seongsu" },
+            { id: 12, kor: "애플하우스", eng: "Apple House", canto: "蘋果屋", locCanto: "梨水", locEng: "Isu", famCanto: "即席辣炒年糕", famEng: "Instant Tteokbokki", cat: "街頭小食", catId: "street", wait: "5-15m", waitLvl: "low", book: "Walk-in", remarkCanto: "必點「涼拌炸水餃 (Muchim Mandu)」。", area: "Gangnam" },
+            { id: 13, kor: "한추", eng: "Hanchoo", canto: "Hanchoo 啤酒屋", locCanto: "新沙洞", locEng: "Sinsa", famCanto: "炸青陽辣椒 / 炸雞", famEng: "Fried Chili & Chicken", cat: "小食", catId: "street", wait: "10-20m", waitLvl: "low", book: "Walk-in", remarkCanto: "硬核地道啤酒屋。無遊客包裝，生啤配炸辣椒。", area: "Gangnam" },
+            { id: 14, kor: "마녀김밥", eng: "Manyeo Gimbap", canto: "魔女紫菜包飯", locCanto: "弘大/江南", locEng: "Hongdae/Gangnam", famCanto: "炸蟹柳紫菜包飯", famEng: "Fried Crab Stick Gimbap", cat: "街頭小食", catId: "street", wait: "0-5m", waitLvl: "low", book: "外賣 Takeout", remarkCanto: "裡面包了超級香脆的炸蟹肉絲，咬下去酥脆作響。", area: "Hongdae" },
+            { id: 15, kor: "오토김밥", eng: "Otto Gimbap", canto: "Otto 紫菜包飯", locCanto: "梨泰院", locEng: "Itaewon", famCanto: "芥末紫菜包飯/炸雞", famEng: "Wasabi Gimbap/Chicken", cat: "街頭小食", catId: "street", wait: "0-5m", waitLvl: "low", book: "外賣 Takeout", remarkCanto: "外帶效率極高，極力推薦「包飯+炸雞」半半組合。", area: "Itaewon" },
+            { id: 16, kor: "피오니", eng: "Peony", canto: "Peony 蛋糕", locCanto: "弘大", locEng: "Hongdae", famCanto: "草莓鮮奶油蛋糕", famEng: "Strawberry Cream Cake", cat: "Cafe", catId: "cafe", wait: "5-15m", waitLvl: "low", book: "Walk-in", remarkCanto: "100% 動物鮮奶油，甜度完美平衡。翻桌快。", area: "Hongdae" },
+            { id: 17, kor: "베니케이크", eng: "Benny Cake", canto: "Benny 蛋糕", locCanto: "弘大", locEng: "Hongdae", famCanto: "90年代美式復古蛋糕", famEng: "90s Retro Cake", cat: "Cafe", catId: "cafe", wait: "10-30m", waitLvl: "med", book: "Walk-in", remarkCanto: "視覺霸主，90年代復古公仔屋風格，蛋糕扎實。", area: "Hongdae" },
+            { id: 18, kor: "해피베어데이", eng: "Happy Bear Day", canto: "快樂小熊 Cafe", locCanto: "合井", locEng: "Hapjeong", famCanto: "彩色小熊復古蛋糕", famEng: "Colorful Bear Cake", cat: "Cafe", catId: "cafe", wait: "10-20m", waitLvl: "low", book: "Walk-in", remarkCanto: "彩色復古小熊與兔子擠花，IG打卡必備。", area: "Hongdae" },
+            { id: 19, kor: "야미케이크", eng: "Yammy Cake", canto: "Yammy 蛋糕", locCanto: "延南洞", locEng: "Yeonnam", famCanto: "搞怪華麗字母蛋糕", famEng: "Kitsch Lettering Cake", cat: "Cafe", catId: "cafe", wait: "5-15m", waitLvl: "low", book: "Walk-in", remarkCanto: "Kitsch (搞怪可愛) 路線，裝飾有復古櫻桃。", area: "Hongdae" },
+            { id: 20, kor: "빅토리아베이커리", eng: "Victoria Bakery", canto: "維多利亞烘焙", locCanto: "西村", locEng: "Seochon", famCanto: "歐洲貴族綁帶海綿蛋糕", famEng: "Ribbon Sponge Cake", cat: "Cafe", catId: "cafe", wait: "10-20m", waitLvl: "low", book: "Walk-in Only", remarkCanto: "歐洲貴族復古風，實體緞帶華麗海綿蛋糕，充滿高級感。", area: "Central" },
+            { id: 21, kor: "카페레이어드", eng: "Cafe Layered", canto: "Layered 咖啡", locCanto: "延南/北村", locEng: "Bukchon", famCanto: "英式狂野復古鮮奶油", famEng: "British Retro Cream", cat: "Cafe", catId: "cafe", wait: "15-30m", waitLvl: "med", book: "Walk-in Only", remarkCanto: "英式復古鄉村風始祖，狂野鮮奶油塗抹，小狗司康必點。", area: "Central" },
+            { id: 22, kor: "딩가케이크", eng: "Dinga Cake House", canto: "Dinga 蛋糕", locCanto: "延南洞", locEng: "Yeonnam", famCanto: "卡通造型蛋糕 (Cute)", famEng: "Cartoon Style Cake", cat: "Cafe", catId: "cafe", wait: "10-20m", waitLvl: "low", book: "Walk-in Only", remarkCanto: "蛋糕外觀像美式卡通/黏土動畫，色彩鮮豔但口味扎實。", area: "Hongdae" },
+            { id: 23, kor: "카페하이웨스트", eng: "Cafe Highwaist", canto: "Highwaist 咖啡", locCanto: "益善洞", locEng: "Ikseon-dong", famCanto: "立體小狗/小熊蛋糕", famEng: "3D Dog/Bear Cake", cat: "Cafe", catId: "cafe", wait: "15-30m", waitLvl: "med", book: "CatchTable 網頁", remarkCanto: "韓國復古動物甜點頂點，外表無敵可愛。", area: "Jongno" },
+            { id: 24, kor: "누데이크", eng: "Nudake", canto: "Nudake 藝術甜點", locCanto: "聖水/狎鷗亭", locEng: "Seongsu", famCanto: "抹茶岩漿可頌蛋糕", famEng: "Matcha Lava Croissant", cat: "Cafe", catId: "cafe", wait: "15-40m", waitLvl: "high", book: "CatchTable 網頁", remarkCanto: "Gentle Monster旗下，前衛藝術雕塑風格，視覺衝擊極強。", area: "Seongsu" },
+            { id: 25, kor: "테디스오븐", eng: "Teddy's Oven", canto: "泰迪烤箱", locCanto: "聖水", locEng: "Seongsu", famCanto: "泰迪熊法式甜點", famEng: "Teddy Bear Desserts", cat: "Cafe", catId: "cafe", wait: "10-20m", waitLvl: "low", book: "CatchTable 網頁", remarkCanto: "法式鄉村風，所有甜點與拉花全是超可愛泰迪熊。", area: "Seongsu" },
+            { id: 26, kor: "카페 무니", eng: "Cafe Mooni", canto: "Mooni 咖啡", locCanto: "狎鷗亭", locEng: "Apgujeong", famCanto: "浮誇奶昔蛋糕杯", famEng: "Monster Milkshake", cat: "Cafe", catId: "cafe", wait: "15-30m", waitLvl: "med", book: "Walk-in", remarkCanto: "巨大粉紅蝴蝶結大門，招牌是插滿馬卡龍的杯子。", area: "Gangnam" },
+            { id: 27, kor: "파롤앤랑그", eng: "Parole & Langue", canto: "Parole & Langue", locCanto: "延南洞", locEng: "Yeonnam", famCanto: "栗子派 / 烤玉米派", famEng: "Chestnut/Corn Pie", cat: "Cafe", catId: "cafe", wait: "15-40m", waitLvl: "high", book: "CatchTable 網頁", remarkCanto: "專攻法式派塔建築學。可以先抽號碼牌再去逛街。", area: "Hongdae" },
+            { id: 28, kor: "소하염전", eng: "Soha Salt Pond", canto: "小夏鹽田", locCanto: "益善洞", locEng: "Ikseon-dong", famCanto: "頂級鹽麵包 (Salt Bread)", famEng: "Premium Salt Bread", cat: "Cafe", catId: "cafe", wait: "5m", waitLvl: "low", book: "外賣 Takeout", remarkCanto: "善用外帶路線。松露鹽麵包的油脂與鹽分結構是工程學傑作。", area: "Jongno" },
+            { id: 29, kor: "런던 베이글 뮤지엄", eng: "London Bagel Museum", canto: "倫敦貝果博物館", locCanto: "安國/島山", locEng: "Anguk/Dosan", famCanto: "英倫風爆餡貝果", famEng: "Stuffed Bagels", cat: "Cafe", catId: "cafe", wait: "1-3h", waitLvl: "high", book: "CatchTable App", remarkCanto: "首爾排隊王！強烈建議開門前去排隊拿外帶號碼牌。", area: "Jongno" },
+            { id: 30, kor: "콩뼈숯뼈감자탕 북창점", eng: "Kongppyeo Gamjatang", canto: "孔骨炭骨馬鈴薯排骨湯", locCanto: "Raum 169 周邊", locEng: "Near Hotel", famCanto: "濃郁馬鈴薯排骨湯", famEng: "Pork Bone Stew", cat: "鍋物", catId: "stew", wait: "0-10m", waitLvl: "low", book: "Walk-in (24H)", remarkCanto: "24小時營業！飯店步行4分。半夜吃熱騰騰的豬骨湯最解壓。", area: "Raum169" },
+            { id: 31, kor: "싸다김밥 숭례문점", eng: "Ssada Gimbap", canto: "Ssada 紫菜包飯", locCanto: "Raum 169 周邊", locEng: "Near Hotel", famCanto: "紫菜包飯/辣炒年糕", famEng: "Gimbap / Tteokbokki", cat: "街頭小食", catId: "street", wait: "0m", waitLvl: "low", book: "Walk-in (24H)", remarkCanto: "24小時營業！飯店步行3分。隨時能外帶回房間的高效碳水補給。", area: "Raum169" },
+            { id: 32, kor: "보승회관 시청점", eng: "Boseung Hoegwan", canto: "保承會館 豬肉湯飯", locCanto: "Raum 169 周邊", locEng: "Near Hotel", famCanto: "豬肉湯飯/白切肉", famEng: "Pork Soup / Sliced Pork", cat: "燉湯", catId: "stew", wait: "0-10m", waitLvl: "low", book: "Walk-in (24H)", remarkCanto: "24小時營業！飯店步行5分。湯頭溫潤，非常適合半夜暖胃。", area: "Raum169" },
+            { id: 33, kor: "BHC치킨 숭례문점", eng: "BHC Chicken", canto: "BHC 炸雞 (崇禮門店)", locCanto: "Raum 169 周邊", locEng: "Near Hotel", famCanto: "Bburinkle 蒜味起司炸雞", famEng: "Bburinkle Chicken", cat: "小食/宵夜", catId: "street", wait: "10-20m", waitLvl: "low", book: "Walk-in / 外賣", remarkCanto: "韓國代表性炸雞，步行可達，強烈建議直接外帶回飯店配啤酒。", area: "Raum169" }
+        ];
+
+        // Base Shopping Database
+        const baseShops = [
+            { id: "s1", kor: "무신사 스탠다드", eng: "Musinsa Standard", canto: "Musinsa Standard", locCanto: "弘大/聖水", locEng: "Hongdae/Seongsu", famCanto: "韓國國民基本款，剪裁極佳", famEng: "Basic Apparel", cat: "男女裝", catId: "unisex", wait: "0-10m", waitLvl: "low", book: "Walk-in", remarkCanto: "材質與剪裁超讚，性價比極高，必買素T與寬褲。", area: "Hongdae" },
+            { id: "s2", kor: "에이랜드", eng: "ALAND", canto: "ALAND", locCanto: "弘大/明洞", locEng: "Hongdae/Myeongdong", famCanto: "設計師品牌集合店", famEng: "Designer Select Shop", cat: "男女裝", catId: "unisex", wait: "0m", waitLvl: "low", book: "Walk-in", remarkCanto: "潮人必逛，涵蓋服飾到文創小物，一次買齊。", area: "Hongdae" },
+            { id: "s3", kor: "마르디 메크르디", eng: "Mardi Mercredi", canto: "Mardi Mercredi", locCanto: "漢南洞", locEng: "Hannam-dong", famCanto: "小雛菊T恤、法式慵懶風", famEng: "Daisy Graphic Tees", cat: "女裝", catId: "women", wait: "10-30m", waitLvl: "med", book: "Walk-in", remarkCanto: "韓國超紅小雛菊品牌，店面常需排隊。", area: "Itaewon" },
+            { id: "s4", kor: "젠틀몬스터", eng: "Gentle Monster", canto: "Gentle Monster", locCanto: "聖水/狎鷗亭", locEng: "Seongsu", famCanto: "前衛墨鏡與藝術裝置", famEng: "Sunglasses", cat: "配件/其他", catId: "other", wait: "0-10m", waitLvl: "low", book: "Walk-in", remarkCanto: "不僅是買墨鏡，整間店就是個現代美術館。", area: "Seongsu" },
+            { id: "s5", kor: "올리브영", eng: "Olive Young", canto: "Olive Young", locCanto: "全韓國到處都有", locEng: "Everywhere", famCanto: "最新韓國美妝保養品", famEng: "K-Beauty", cat: "美妝", catId: "beauty", wait: "0m", waitLvl: "low", book: "Walk-in", remarkCanto: "韓國最大藥妝店，買面膜與彩妝的首選。", area: "Central" },
+            { id: "s6", kor: "커버낫", eng: "Covernat", canto: "Covernat", locCanto: "弘大", locEng: "Hongdae", famCanto: "美式街頭休閒男裝", famEng: "Streetwear", cat: "男裝", catId: "men", wait: "0m", waitLvl: "low", book: "Walk-in", remarkCanto: "大學生最愛品牌，Logo T恤必買。", area: "Hongdae" }
+        ];
+
+        const masterCatConfig = {
+            "AllFood": { icon: "sparkles", label: "全部 (All)", type: "food", grad: "from-gray-400 to-gray-500" },
+            "bbq": { icon: "flame", label: "烤肉 (BBQ)", type: "food", grad: "from-orange-400 to-red-500" },
+            "stew": { icon: "soup", label: "鍋物/湯 (Stew)", type: "food", grad: "from-amber-500 to-orange-600" },
+            "meal": { icon: "bowl-food", label: "正餐 (Meal)", type: "food", grad: "from-blue-400 to-indigo-500" },
+            "street": { icon: "utensils-crossed", label: "小食 (Street)", type: "food", grad: "from-yellow-400 to-amber-500" },
+            "cafe": { icon: "coffee", label: "Cafe", type: "food", grad: "from-pink-400 to-rose-400" },
+            "AllShop": { icon: "shopping-bag", label: "全部 (All)", type: "shop", grad: "from-gray-400 to-gray-500" },
+            "women": { icon: "shirt", label: "女裝", type: "shop", grad: "from-pink-400 to-rose-400" },
+            "men": { icon: "user", label: "男裝", type: "shop", grad: "from-blue-500 to-cyan-500" },
+            "unisex": { icon: "users", label: "男女裝", type: "shop", grad: "from-purple-400 to-indigo-500" },
+            "beauty": { icon: "sparkles", label: "美妝", type: "shop", grad: "from-fuchsia-400 to-pink-500" },
+            "other": { icon: "glasses", label: "配件/景點", type: "shop", grad: "from-amber-400 to-orange-500" }
+        };
+
+        const areas = [
+            { id: "Raum169", icon: "bed-double", name: "飯店周邊 (Raum 169)", sub: "步行 5 分鐘 / 24H 宵夜首選" },
+            { id: "Hongdae", icon: "music", name: "弘大/延南/合井", sub: "年輕活力商圈" },
+            { id: "Seongsu", icon: "zap", name: "聖水洞", sub: "潮流工廠 Cafe 區" },
+            { id: "Jongno", icon: "landmark", name: "鐘路/益善洞", sub: "韓屋復古文化區" },
+            { id: "Euljiro", icon: "beer", name: "乙支路", sub: "地道老字號餐廳" },
+            { id: "Central", icon: "map-pin", name: "中區/光化門/西村", sub: "首爾站與市中心" },
+            { id: "Gangnam", icon: "gem", name: "江南/新沙/狎鷗亭", sub: "高級精品與打卡" },
+            { id: "Itaewon", icon: "globe", name: "梨泰院", sub: "異國風情" },
+            { id: "Dongdaemun", icon: "shopping-bag", name: "東大門/新設洞", sub: "購物與美食" }
+        ];
+
+        // State Management
+        let currentTab = 'home';
+        let activeFilter = 'AllFood';
+        let activeShoppingFilter = 'AllShop';
+        let activeArea = null;
+        let selectedPlaceIdForSheet = null;
+
+        // App State Setup
+        let appState = JSON.parse(localStorage.getItem('seoulAppState'));
+        if (!appState) {
+            appState = { 
+                totalDays: 4, items: {}, shoppingItems: {}, customShops: [],
+                tripStartDate: '', tripEndDate: '',
+                outboundDepTime: '', outboundArrTime: '', flightOut: '',
+                inboundDepTime: '', inboundArrTime: '', flightIn: '',
+                flightOrigin: 'HKG'
+            };
+        }
+        
+        // Safety checks for migrations
+        if (appState.outboundDepTime === undefined) appState.outboundDepTime = '';
+        if (appState.outboundArrTime === undefined) appState.outboundArrTime = '';
+        if (appState.inboundDepTime === undefined) appState.inboundDepTime = '';
+        if (appState.inboundArrTime === undefined) appState.inboundArrTime = '';
+        if (appState.flightOut === undefined) appState.flightOut = '';
+        if (appState.flightIn === undefined) appState.flightIn = '';
+        if (appState.customShops === undefined) appState.customShops = [];
+        if (appState.shoppingItems === undefined) appState.shoppingItems = {};
+
+        function saveState() { 
+            localStorage.setItem('seoulAppState', JSON.stringify(appState)); 
+            updateSavedBadge(); 
+        }
+        function getSavedItemCount() { return Object.keys(appState.items).length + Object.keys(appState.shoppingItems).length; }
+        function getAllShops() { return [...baseShops, ...appState.customShops]; }
+
+        document.getElementById('headerCount').innerText = `Total ${db.length} Places`;
+
+        // UI Helpers
+        const getWaitBadge = (lvl, txt) => {
+            const c = { low: "bg-emerald-100 text-emerald-700", med: "bg-amber-100 text-amber-700", high: "bg-rose-100 text-rose-700" };
+            const i = { low: "check-circle", med: "clock", high: "alert-circle" };
+            return `<span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold ${c[lvl]}"><i data-lucide="${i[lvl]}" class="w-3 h-3 mr-1"></i>${txt}</span>`;
+        };
+
+        const showToast = (msg, isError = false) => {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMsg').innerText = msg;
+            document.getElementById('toastIcon').setAttribute('data-lucide', isError ? 'alert-triangle' : 'check-circle');
+            document.getElementById('toastIcon').classList.toggle('text-red-400', isError);
+            document.getElementById('toastIcon').classList.toggle('text-green-400', !isError);
+            lucide.createIcons();
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2500);
+        };
+
+        window.copyText = (text) => {
+            const fallbackCopy = (text) => {
+                const ta = document.createElement("textarea"); ta.value = text; document.body.appendChild(ta); ta.select();
+                try { document.execCommand('copy'); showToast(`已複製 (Copied)!`); } catch (err) { showToast('複製失敗 (Copy Failed)', true); }
+                document.body.removeChild(ta);
+            };
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(() => showToast(`已複製 (Copied)!`)).catch(() => fallbackCopy(text));
+            } else fallbackCopy(text);
+        };
+
+        window.setFilter = (key) => {
+            activeFilter = key;
+            renderFilters();
+            renderContent();
+        };
+
+        window.setShoppingFilter = (key) => {
+            activeShoppingFilter = key;
+            renderShoppingFilters();
+            renderContent();
+        };
+
+        window.toggleSave = (id, type) => {
+            if (type === 'food') {
+                if (appState.items.hasOwnProperty(id)) { delete appState.items[id]; showToast('已移除餐廳收藏'); } 
+                else { appState.items[id] = 0; showToast('餐廳已加入行程！'); }
+            } else if (type === 'shop') {
+                if (appState.shoppingItems.hasOwnProperty(id)) { delete appState.shoppingItems[id]; showToast('已移除地點收藏'); } 
+                else { appState.shoppingItems[id] = 0; showToast('地點已加入行程！'); }
+            }
+            saveState();
+            renderContent();
+        };
+
+        function updateDaysFromDates() {
+            if (appState.tripStartDate && appState.tripEndDate) {
+                const start = new Date(appState.tripStartDate);
+                const end = new Date(appState.tripEndDate);
+                const diffTime = end - start;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                
+                if (diffDays > 0 && diffDays < 30) {
+                    if (appState.totalDays !== diffDays) {
+                        appState.totalDays = diffDays;
+                        Object.keys(appState.items).forEach(id => { if(appState.items[id] > appState.totalDays) appState.items[id] = 0; });
+                        Object.keys(appState.shoppingItems).forEach(id => { if(appState.shoppingItems[id] > appState.totalDays) appState.shoppingItems[id] = 0; });
+                        saveState();
+                        renderContent(); 
+                        showToast(`行程已自動更新為 ${diffDays} 天`);
+                    }
+                }
+            }
+        }
+
+        window.handleInputChange = (field, value) => {
+            appState[field] = value;
+            saveState();
+            if (field === 'tripStartDate' || field === 'tripEndDate') updateDaysFromDates();
+            if (currentTab === 'home') renderHome();
+        };
+
+        window.calcCurrency = (krw) => {
+            if(!krw) { document.getElementById('currencyResult').innerText = "0 HKD"; return; }
+            const hkd = (parseInt(krw) / 170).toFixed(1);
+            document.getElementById('currencyResult').innerText = `約 ${hkd} HKD`;
+        };
+
+        function adjustMainPadding() {
+            setTimeout(() => {
+                const header = document.getElementById('app-header');
+                const main = document.getElementById('main-content');
+                if (header && main) {
+                    main.style.paddingTop = (header.offsetHeight + 15) + 'px';
+                }
+            }, 50);
+        }
+
+        window.checkFlightStatus = (type) => {
+            const flight = type === 'outbound' ? appState.flightOut : appState.flightIn;
+            if(!flight || flight.trim() === '') {
+                showToast('請先輸入航班編號！(e.g., CX410)', true);
+                return;
+            }
+            window.open(`https://www.google.com/search?q=flight+status+${encodeURIComponent(flight)}`, '_blank');
+        };
+
+        window.smartAssignItinerary = () => {
+            const itemKeys = Object.keys(appState.items);
+            const shopKeys = Object.keys(appState.shoppingItems);
+            
+            if(itemKeys.length === 0 && shopKeys.length === 0) {
+                showToast('請先收藏想去的地點！', true);
+                switchTab('explore');
+                return;
+            }
+
+            const unassignedFood = itemKeys.filter(id => appState.items[id] === 0);
+            const unassignedShops = shopKeys.filter(id => appState.shoppingItems[id] === 0);
+            
+            if(unassignedFood.length === 0 && unassignedShops.length === 0) {
+                showToast('已全部分配完畢！', false);
+                if (currentTab !== 'saved') switchTab('saved');
+                return;
+            }
+            
+            let currentDay = 1;
+            unassignedFood.forEach(id => {
+                appState.items[id] = currentDay;
+                currentDay = currentDay >= appState.totalDays ? 1 : currentDay + 1;
+            });
+            
+            unassignedShops.forEach(id => {
+                appState.shoppingItems[id] = currentDay;
+                currentDay = currentDay >= appState.totalDays ? 1 : currentDay + 1;
+            });
+
+            saveState();
+            showToast(`成功自動分配 ${unassignedFood.length + unassignedShops.length} 個地點！`);
+            switchTab('saved'); 
+        };
+
+        window.changeTotalDays = (delta) => {
+            let newDays = appState.totalDays + delta;
+            if (newDays < 1) newDays = 1;
+            if (newDays > 14) newDays = 14;
+            appState.totalDays = newDays;
+            
+            Object.keys(appState.items).forEach(id => { if(appState.items[id] > newDays) appState.items[id] = 0; });
+            Object.keys(appState.shoppingItems).forEach(id => { if(appState.shoppingItems[id] > newDays) appState.shoppingItems[id] = 0; });
+            saveState();
+            renderContent();
+        };
+
+        window.autoFillShop = () => {
+            const nameInput = document.getElementById('newShopName').value.trim().toLowerCase();
+            if(!nameInput) return showToast('請先輸入店舖名稱！', true);
+            
+            showToast('🪄 正在帶入資訊...', false);
+            setTimeout(() => {
+                if(nameInput.includes('olive') || nameInput.includes('young') || nameInput.includes('奧利芙')) {
+                    document.getElementById('newShopKor').value = '올리브영';
+                    document.getElementById('newShopCat').value = 'beauty';
+                    document.getElementById('newShopArea').value = '明洞/弘大';
+                    document.getElementById('newShopNote').value = '面膜、棉片、彩妝';
+                    document.getElementById('newShopWait').value = '0m';
+                } else if (nameInput.includes('gentle') || nameInput.includes('monster')) {
+                    document.getElementById('newShopKor').value = '젠틀몬스터';
+                    document.getElementById('newShopCat').value = 'other';
+                    document.getElementById('newShopArea').value = '聖水/狎鷗亭';
+                    document.getElementById('newShopNote').value = '前衛墨鏡、香水';
+                    document.getElementById('newShopWait').value = '0-15m';
+                } else if (nameInput.includes('daiso') || nameInput.includes('大創')) {
+                    document.getElementById('newShopKor').value = '다이소';
+                    document.getElementById('newShopCat').value = 'other';
+                    document.getElementById('newShopArea').value = '明洞 (8層樓)';
+                    document.getElementById('newShopNote').value = '平價生活小物、伴手禮';
+                    document.getElementById('newShopWait').value = '0m';
+                } else if (nameInput.includes('景福宮') || nameInput.includes('gyeongbokgung')) {
+                    document.getElementById('newShopKor').value = '경복궁';
+                    document.getElementById('newShopCat').value = 'other';
+                    document.getElementById('newShopArea').value = '光化門';
+                    document.getElementById('newShopNote').value = '穿韓服免門票';
+                    document.getElementById('newShopWait').value = '0m';
+                } else {
+                    document.getElementById('newShopWait').value = '0-10m';
+                    document.getElementById('newShopBook').value = 'Walk-in';
+                    showToast('找不到精確資料，已填入部分預設值。建議使用「Google搜尋」補充！');
+                }
+                lucide.createIcons();
+            }, 600);
+        };
+
+        window.searchShopWeb = () => {
+            const name = document.getElementById('newShopName').value.trim();
+            if(!name) return showToast('請先輸入店舖名稱！', true);
+            window.open(`https://www.google.com/search?q=首爾+${encodeURIComponent(name)}+必買`, '_blank');
+        };
+
+        window.openAddShopModal = () => {
+            document.getElementById('newShopName').value = '';
+            document.getElementById('newShopKor').value = '';
+            document.getElementById('newShopArea').value = '';
+            document.getElementById('newShopNote').value = '';
+            document.getElementById('newShopRemark').value = '';
+            document.getElementById('newShopWait').value = '';
+            document.getElementById('newShopBook').value = '';
+            document.getElementById('newShopCat').value = 'women';
+            
+            const modal = document.getElementById('addShopModal');
+            const content = document.getElementById('addShopModalContent');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                content.classList.remove('scale-95');
+            }, 10);
+        };
+
+        window.closeAddShopModal = () => {
+            const modal = document.getElementById('addShopModal');
+            const content = document.getElementById('addShopModalContent');
+            modal.classList.add('opacity-0');
+            content.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }, 300);
+        };
+
+        window.saveCustomShop = () => {
+            const name = document.getElementById('newShopName').value.trim();
+            const kor = document.getElementById('newShopKor').value.trim();
+            const cat = document.getElementById('newShopCat').value;
+            const area = document.getElementById('newShopArea').value.trim() || '自訂區域';
+            const note = document.getElementById('newShopNote').value.trim() || '隨便逛逛';
+            const remark = document.getElementById('newShopRemark').value.trim() || '自訂行程';
+            const wait = document.getElementById('newShopWait').value.trim() || '0m';
+            const book = document.getElementById('newShopBook').value.trim() || 'Walk-in';
+            const catLabel = document.getElementById('newShopCat').options[document.getElementById('newShopCat').selectedIndex].text.split(' ')[0];
+
+            if(!name) {
+                showToast('請輸入店舖名稱！', true);
+                return;
+            }
+
+            const newShop = {
+                id: 'cs_' + Date.now(),
+                canto: name,
+                eng: name,
+                kor: kor || name,
+                locCanto: area,
+                famCanto: note,
+                remarkCanto: remark,
+                cat: catLabel,
+                catId: cat,
+                wait: wait,
+                waitLvl: 'low',
+                book: book,
+                area: area
+            };
+
+            appState.customShops.push(newShop);
+            saveState();
+            closeAddShopModal();
+            showToast('成功新增地點！');
+            renderContent(); 
+        };
+
+        let sheetType = 'food'; 
+        window.openDaySelector = (id, type = 'food') => {
+            selectedPlaceIdForSheet = id;
+            sheetType = type;
+            const currentDay = type === 'food' ? (appState.items[id] || 0) : (appState.shoppingItems[id] || 0);
+            
+            let html = `
+                <button onclick="assignToDay(0)" class="w-full text-left px-5 py-3.5 rounded-xl border mb-2 flex justify-between items-center transition ${currentDay === 0 ? 'bg-blue-50 border-blue-200 text-blue-700 font-bold' : 'bg-white border-gray-100 font-medium'}">
+                    <span>📌 未安排 (Unassigned)</span>
+                    ${currentDay === 0 ? '<i data-lucide="check" class="w-5 h-5"></i>' : ''}
+                </button>
+            `;
+            for(let i=1; i<=appState.totalDays; i++) {
+                html += `
+                    <button onclick="assignToDay(${i})" class="w-full text-left px-5 py-3.5 rounded-xl border mb-2 flex justify-between items-center transition ${currentDay === i ? 'bg-blue-50 border-blue-200 text-blue-700 font-bold' : 'bg-white border-gray-100 font-medium'}">
+                        <span>🗓️ Day ${i}</span>
+                        ${currentDay === i ? '<i data-lucide="check" class="w-5 h-5"></i>' : ''}
+                    </button>
+                `;
+            }
+            html += `
+                <button onclick="toggleSave('${id}', '${type}'); closeDaySelector();" class="w-full text-left px-5 py-3.5 rounded-xl border border-red-100 bg-red-50 text-red-600 font-bold mt-4 flex items-center">
+                    <i data-lucide="trash-2" class="w-5 h-5 mr-2"></i> 移除此項目 (Remove)
+                </button>
+            `;
+
+            document.getElementById('sheetOptions').innerHTML = html;
+            lucide.createIcons();
+            document.getElementById('bottomSheetOverlay').classList.add('open');
+            document.getElementById('bottomSheet').classList.add('open');
+        };
+
+        window.assignToDay = (dayNum) => {
+            if(selectedPlaceIdForSheet !== null) {
+                if(sheetType === 'food') {
+                    appState.items[selectedPlaceIdForSheet] = dayNum;
+                } else {
+                    appState.shoppingItems[selectedPlaceIdForSheet] = dayNum;
+                }
+                saveState();
+                closeDaySelector();
+                renderContent();
+                showToast(dayNum === 0 ? '已移至「未安排」' : `已分配至 Day ${dayNum}`);
+            }
+        };
+
+        window.closeDaySelector = () => {
+            document.getElementById('bottomSheetOverlay').classList.remove('open');
+            document.getElementById('bottomSheet').classList.remove('open');
+            selectedPlaceIdForSheet = null;
+        };
+
+        // UI Modals for Sharing
+        window.openShareModal = () => {
+            const modal = document.getElementById('shareModal');
+            const content = document.getElementById('shareModalContent');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                content.classList.remove('scale-95');
+            }, 10);
+        };
+
+        window.closeShareModal = () => {
+            const modal = document.getElementById('shareModal');
+            const content = document.getElementById('shareModalContent');
+            modal.classList.add('opacity-0');
+            content.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }, 300);
+        };
+
+        function generateItineraryText() {
+            if(getSavedItemCount() === 0) return null;
+            let text = "🎒 我的首爾完美行程表 (Seoul Itinerary)：\n";
+            if (appState.tripStartDate && appState.tripEndDate) {
+                text += `📅 日期: ${appState.tripStartDate} 至 ${appState.tripEndDate} (${appState.totalDays}天)\n`;
+            }
+            text += "\n";
+            for(let i=1; i<=appState.totalDays; i++) {
+                const dayFood = db.filter(p => appState.items[p.id] === i);
+                const dayShops = getAllShops().filter(p => appState.shoppingItems[p.id] === i);
+                if(dayFood.length > 0 || dayShops.length > 0) {
+                    text += `【 Day ${i} 】\n`;
+                    if(dayFood.length > 0) {
+                        text += `🍽️ 美食:\n`;
+                        dayFood.forEach(p => { text += `  📍 ${p.canto} (${p.locCanto})\n     導航: https://map.naver.com/v5/search/${encodeURIComponent(p.kor)}\n`; });
+                    }
+                    if(dayShops.length > 0) {
+                        text += `🛍️ 景點/購物:\n`;
+                        dayShops.forEach(p => { text += `  🛍️ ${p.canto} (${p.locCanto})\n     導航: https://map.naver.com/v5/search/${encodeURIComponent(p.kor)}\n`; });
+                    }
+                    text += "\n";
+                }
+            }
+            return text.trim();
+        }
+
+        window.shareItineraryText = () => {
+            const text = generateItineraryText();
+            if(!text) { showToast('行程表是空的！', true); closeShareModal(); return; }
+            copyText(text);
+            closeShareModal();
+        };
+
+        window.shareItineraryWhatsApp = () => {
+            const text = generateItineraryText();
+            if(!text) { showToast('行程表是空的！', true); closeShareModal(); return; }
+            const encodedText = encodeURIComponent(text);
+            window.open(`whatsapp://send?text=${encodedText}`, '_blank');
+            closeShareModal();
+        };
+
+        window.shareCard = (id, type) => {
+            let p = null;
+            if(type === 'food') p = db.find(x => x.id === id);
+            else p = getAllShops().find(x => x.id === id);
+            const text = `推薦你首爾必去！✨\n📍 ${p.canto} (${p.kor})\n🗺️ 位於: ${p.locCanto}\n💡 必試: ${p.famCanto}\n\n導航: https://map.naver.com/v5/search/${encodeURIComponent(p.kor)}`;
+            copyText(text);
+        };
+
+        const updateSavedBadge = () => {
+            const badge = document.getElementById('savedBadge');
+            const count = getSavedItemCount();
+            badge.innerText = count;
+            badge.classList.toggle('hidden', count === 0);
+        };
+
+        // Render Functions
+        function renderFilters() {
+            const el = document.getElementById('categoryFilters');
+            el.innerHTML = Object.keys(masterCatConfig).filter(k => masterCatConfig[k].type === 'food').map(key => {
+                const act = key === activeFilter ? "bg-gray-900 text-white shadow-md border-gray-900" : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50";
+                return `<button onclick="setFilter('${key}')" class="flex items-center px-4 py-2 rounded-xl border text-sm font-bold whitespace-nowrap transition-all flex-shrink-0 ${act}">
+                    <i data-lucide="${masterCatConfig[key].icon}" class="w-4 h-4 mr-2"></i> ${masterCatConfig[key].label}
+                </button>`;
+            }).join('');
+            lucide.createIcons();
+        }
+
+        function renderShoppingFilters() {
+            const el = document.getElementById('categoryFilters');
+            el.innerHTML = Object.keys(masterCatConfig).filter(k => masterCatConfig[k].type === 'shop').map(key => {
+                const act = key === activeShoppingFilter ? "bg-gray-900 text-white shadow-md border-gray-900" : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50";
+                return `<button onclick="setShoppingFilter('${key}')" class="flex items-center px-4 py-2 rounded-xl border text-sm font-bold whitespace-nowrap transition-all flex-shrink-0 ${act}">
+                    <i data-lucide="${masterCatConfig[key].icon}" class="w-4 h-4 mr-2"></i> ${masterCatConfig[key].label}
+                </button>`;
+            }).join('');
+            lucide.createIcons();
+        }
+
+        function renderCards(data, context = 'explore') {
+            if(data.length === 0) return `<div class="text-center py-20"><p class="text-gray-500 font-bold">無相關資料</p></div>`;
+            return `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 pb-6">` + data.map(p => {
+                const isFood = typeof p.id === 'number';
+                const itemType = isFood ? 'food' : 'shop';
+                const isSaved = isFood ? appState.items.hasOwnProperty(p.id) : appState.shoppingItems.hasOwnProperty(p.id);
+                const conf = masterCatConfig[p.catId] || masterCatConfig['other'];
+                const mapLink = `https://map.naver.com/v5/search/${encodeURIComponent(p.kor)}`;
+                
+                let bookClass = "bg-gray-100 text-gray-500 hover:bg-gray-200";
+                let bookIcon = "calendar-x";
+                let bookSub = "現場排隊";
+                let bookUrl = "#";
+                let isBookable = false;
+                
+                let is24H = p.book?.includes("24H") || false;
+                let badge24H = is24H ? `<span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-black bg-purple-100 text-purple-700 border border-purple-200 ml-1"><i data-lucide="moon" class="w-3 h-3 mr-1"></i>24H</span>` : '';
+
+                if(p.book?.includes("CatchTable") || p.book?.includes("App")) {
+                    bookClass = "bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-100";
+                    bookIcon = "calendar-check";
+                    bookSub = "點擊搜尋";
+                    bookUrl = `https://app.catchtable.co.kr/ct/search/result?keyword=${encodeURIComponent(p.kor)}`;
+                    isBookable = true;
+                } else if(is24H) {
+                    bookClass = "bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-100";
+                    bookIcon = "moon";
+                    bookSub = "隨時可吃";
+                } else if(!isFood) {
+                    bookSub = p.book || "直接前往";
+                }
+
+                let topRightAction = `
+                    <button onclick="toggleSave('${p.id}', '${itemType}')" class="absolute top-3 right-3 bg-white/30 backdrop-blur-md p-2 rounded-full hover:bg-white/50 transition shadow-sm">
+                        <i data-lucide="heart" class="w-5 h-5 ${isSaved ? 'fill-red-500 text-red-500' : 'text-white'}"></i>
+                    </button>
+                `;
+
+                if (context === 'saved') {
+                    const assignedDay = isFood ? (appState.items[p.id] || 0) : (appState.shoppingItems[p.id] || 0);
+                    const badgeText = assignedDay === 0 ? '📌 未安排' : `🗓️ Day ${assignedDay}`;
+                    const badgeColor = assignedDay === 0 ? 'text-gray-600 bg-white/90' : 'text-blue-700 bg-white/95';
+                    topRightAction = `
+                        <button onclick="openDaySelector('${p.id}', '${itemType}')" class="absolute top-3 right-3 ${badgeColor} backdrop-blur-md px-3 py-1.5 rounded-full shadow-md text-xs font-black flex items-center transition active:scale-95 border border-white/40">
+                            ${badgeText} <i data-lucide="chevron-down" class="w-3 h-3 ml-1 opacity-70"></i>
+                        </button>
+                    `;
+                }
+
+                return `
+                <article class="app-card app-card-active flex flex-col h-full border border-gray-100/50 relative">
+                    <div class="h-28 bg-gradient-to-br ${conf.grad} relative flex items-center justify-center group">
+                        <i data-lucide="${conf.icon}" class="w-12 h-12 text-white/90 drop-shadow-md"></i>
+                        <button onclick="shareCard('${p.id}', '${itemType}')" class="absolute top-3 left-3 bg-white/20 backdrop-blur-sm p-2 rounded-full hover:bg-white/40 transition">
+                            <i data-lucide="share" class="w-4 h-4 text-white"></i>
+                        </button>
+                        ${topRightAction}
+                        <div class="absolute bottom-3 left-3 bg-white/95 backdrop-blur px-2.5 py-1 rounded-lg flex items-center shadow-sm">
+                            <i data-lucide="map-pin" class="w-3 h-3 text-gray-700 mr-1"></i>
+                            <span class="text-[11px] font-black text-gray-900">${p.locCanto || p.area}</span>
+                        </div>
+                    </div>
+                    <div class="p-5 flex-grow flex flex-col">
+                        <div class="mb-3">
+                            <h2 class="text-xl font-black text-gray-900 leading-tight">${p.canto}</h2>
+                            <p class="text-xs font-bold text-gray-400 mt-0.5">${p.eng || ''}</p>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-1.5 mb-4">
+                            ${getWaitBadge(p.waitLvl || 'low', p.wait || '0m')}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold bg-gray-100 text-gray-600">${p.cat}</span>
+                            ${badge24H}
+                        </div>
+                        <div class="bg-gray-50 rounded-xl p-3 mb-4 border border-gray-100">
+                            <p class="text-[9px] font-bold ${isFood ? 'text-blue-600' : 'text-pink-600'} uppercase tracking-wider mb-1">🔥 必試/重點 (Must Do)</p>
+                            <p class="text-[13px] font-black text-gray-900">${p.famCanto}</p>
+                        </div>
+                        <div class="mb-5 flex-grow">
+                            <p class="text-[13px] text-gray-700 font-medium leading-relaxed">${p.remarkCanto}</p>
+                        </div>
+                        <div class="grid grid-cols-3 gap-2 mt-auto pt-2">
+                            <button onclick="copyText('${p.kor}')" class="flex flex-col items-center justify-center bg-gray-100 hover:bg-gray-200 text-gray-800 py-2.5 rounded-xl transition">
+                                <i data-lucide="copy" class="w-4 h-4 mb-1"></i>
+                                <span class="text-[11px] font-black">韓文</span>
+                            </button>
+                            <a href="${bookUrl}" ${isBookable ? 'target="_blank"' : `onclick="event.preventDefault(); showToast('此地點無需預約，直接前往！')"` } class="flex flex-col items-center justify-center ${bookClass} py-2.5 rounded-xl transition">
+                                <i data-lucide="${bookIcon}" class="w-4 h-4 mb-1"></i>
+                                <span class="text-[11px] font-black">${isBookable ? '預約' : (is24H ? '24H' : 'Walk-in')}</span>
+                            </a>
+                            <a href="${mapLink}" target="_blank" class="flex flex-col items-center justify-center bg-[#03C75A] hover:bg-[var(--naver-hover)] text-white py-2.5 rounded-xl transition shadow-sm">
+                                <i data-lucide="map-pinned" class="w-4 h-4 mb-1"></i>
+                                <span class="text-[11px] font-black">地圖</span>
+                            </a>
+                        </div>
+                    </div>
+                </article>`;
+            }).join('') + `</div>`;
+        }
+
+        function getCountdownBadge() {
+            if (!appState.tripStartDate) return `<span class="bg-white/20 px-3 py-1 rounded-full text-xs font-bold border border-white/30">請設定日期</span>`;
+            const today = new Date(); today.setHours(0,0,0,0);
+            const tripDate = new Date(appState.tripStartDate);
+            const diffTime = tripDate - today;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (diffDays > 0) return `<span class="bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full text-xs font-black shadow-sm">倒數 ${diffDays} 天 🚀</span>`;
+            if (diffDays === 0) return `<span class="bg-green-400 text-green-900 px-3 py-1 rounded-full text-xs font-black shadow-sm">今天出發 🇰🇷</span>`;
+            return `<span class="bg-white/20 px-3 py-1 rounded-full text-xs font-bold border border-white/30">旅程中 🎒</span>`;
+        }
+
+        // Render Home
+        function renderHome() {
+            const main = document.getElementById('main-content');
+            main.innerHTML = `
+                <div class="mb-6 px-1">
+                    <h2 class="text-3xl font-black text-gray-900 tracking-tight">行前準備 ✈️</h2>
+                    <p class="text-sm text-gray-500 mt-1">你的首爾專屬旅行儀表板</p>
+                </div>
+                <div class="space-y-6 pb-8">
+                    <!-- Boarding Pass UI -->
+                    <div class="bg-white rounded-3xl shadow-md border border-gray-200 overflow-hidden relative">
+                        <div class="bg-gradient-to-r from-gray-900 to-slate-800 p-5 text-white relative">
+                            <div class="flex justify-between items-center mb-4"><span class="text-[10px] font-bold tracking-widest text-gray-400 uppercase">去程 Outbound</span>${getCountdownBadge()}</div>
+                            <div class="flex justify-between items-center mb-5">
+                                <div class="text-left w-1/3"><select onchange="handleInputChange('flightOrigin', this.value)" class="ticket-input text-2xl font-black tracking-wider bg-transparent border-none focus:ring-0 p-0 appearance-none text-white rounded cursor-pointer"><option value="HKG" ${appState.flightOrigin === 'HKG' ? 'selected' : ''}>HKG</option><option value="TPE" ${appState.flightOrigin === 'TPE' ? 'selected' : ''}>TPE</option><option value="KHH" ${appState.flightOrigin === 'KHH' ? 'selected' : ''}>KHH</option><option value="MFM" ${appState.flightOrigin === 'MFM' ? 'selected' : ''}>MFM</option></select></div>
+                                <div class="flex-grow flex flex-col items-center justify-center px-2 opacity-70"><i data-lucide="plane-takeoff" class="w-5 h-5 mb-1"></i><div class="w-full h-px border-t-2 border-dashed border-white/50"></div></div>
+                                <div class="text-right w-1/3"><div class="text-2xl font-black tracking-wider text-right">ICN</div></div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div><label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Date 日期</label><input type="date" value="${appState.tripStartDate || ''}" onchange="handleInputChange('tripStartDate', this.value)" class="ticket-input w-full rounded-lg px-2 py-1.5 text-sm font-bold"></div>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div class="col-span-2 flex gap-2">
+                                        <div class="flex-grow">
+                                            <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Flight No.</label>
+                                            <input type="text" placeholder="e.g. CX410" value="${appState.flightOut || ''}" onchange="handleInputChange('flightOut', this.value)" class="ticket-input w-full rounded-lg px-2 py-1.5 text-xs font-bold text-center uppercase">
+                                        </div>
+                                        <div class="flex items-end pb-[1px]">
+                                            <button onclick="checkFlightStatus('outbound')" class="bg-blue-600 hover:bg-blue-500 text-white rounded-lg px-3 py-1.5 text-[10px] font-bold h-[28px] flex items-center active:scale-95 transition">追蹤</button>
+                                        </div>
+                                    </div>
+                                    <div><label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Dep 起飛</label><input type="time" value="${appState.outboundDepTime || ''}" onchange="handleInputChange('outboundDepTime', this.value)" class="ticket-input w-full rounded-lg px-1 py-1.5 text-xs font-bold text-center"></div>
+                                    <div><label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Arr 抵達</label><input type="time" value="${appState.outboundArrTime || ''}" onchange="handleInputChange('outboundArrTime', this.value)" class="ticket-input w-full rounded-lg px-1 py-1.5 text-xs font-bold text-center"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="h-4 border-b-2 border-dashed border-gray-200 relative bg-white"><div class="absolute w-4 h-4 bg-[var(--app-bg)] rounded-full -left-2 top-2 shadow-inner"></div><div class="absolute w-4 h-4 bg-[var(--app-bg)] rounded-full -right-2 top-2 shadow-inner"></div></div>
+                        <div class="p-5 bg-white relative">
+                             <div class="flex justify-between items-center mb-3"><span class="text-[10px] font-bold tracking-widest text-gray-400 uppercase">回程 Inbound</span></div>
+                            <div class="flex justify-between items-center mb-5">
+                                <div class="text-left w-1/3"><div class="text-2xl font-black tracking-wider text-gray-900">ICN</div></div>
+                                <div class="flex-grow flex flex-col items-center justify-center px-2 opacity-40"><i data-lucide="plane-landing" class="w-5 h-5 mb-1 text-gray-900"></i><div class="w-full h-px border-t-2 border-dashed border-gray-900"></div></div>
+                                <div class="text-right w-1/3"><div class="text-2xl font-black tracking-wider text-gray-900 text-right">${appState.flightOrigin || 'HKG'}</div></div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div><label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Date 日期</label><input type="date" value="${appState.tripEndDate || ''}" onchange="handleInputChange('tripEndDate', this.value)" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-2 py-1.5 text-sm font-bold text-gray-900 focus:outline-none focus:border-gray-300"></div>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div class="col-span-2 flex gap-2">
+                                        <div class="flex-grow">
+                                            <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Flight No.</label>
+                                            <input type="text" placeholder="e.g. CX411" value="${appState.flightIn || ''}" onchange="handleInputChange('flightIn', this.value)" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-2 py-1.5 text-xs font-bold text-center uppercase focus:outline-none focus:border-gray-300">
+                                        </div>
+                                        <div class="flex items-end pb-[1px]">
+                                            <button onclick="checkFlightStatus('inbound')" class="bg-gray-800 hover:bg-gray-700 text-white rounded-lg px-3 py-1.5 text-[10px] font-bold h-[28px] flex items-center active:scale-95 transition">追蹤</button>
+                                        </div>
+                                    </div>
+                                    <div><label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Dep 起飛</label><input type="time" value="${appState.inboundDepTime || ''}" onchange="handleInputChange('inboundDepTime', this.value)" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-1 py-1.5 text-xs font-bold text-gray-900 text-center focus:outline-none focus:border-gray-300"></div>
+                                    <div><label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Arr 抵達</label><input type="time" value="${appState.inboundArrTime || ''}" onchange="handleInputChange('inboundArrTime', this.value)" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-1 py-1.5 text-xs font-bold text-gray-900 text-center focus:outline-none focus:border-gray-300"></div>
+                                </div>
+                            </div>
+                            <div class="mt-5 pt-4 border-t border-gray-100 flex justify-between items-center">
+                                <div><span class="block text-[10px] font-bold text-gray-400 uppercase">Trip Duration</span><span class="text-sm font-black text-blue-600">${appState.totalDays} Days (天)</span></div>
+                                <div class="bg-blue-50 text-blue-600 p-2 rounded-full"><i data-lucide="check-circle-2" class="w-5 h-5"></i></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Web Quick Links & Currency Widget -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5">
+                            <div class="flex items-center mb-3"><i data-lucide="calculator" class="w-5 h-5 text-green-600 mr-2"></i><h3 class="text-sm font-black text-gray-900">逛街匯率計算器</h3></div>
+                            <div class="flex items-center gap-3">
+                                <div class="relative flex-grow"><span class="absolute left-3 top-2.5 text-gray-400 text-sm font-bold">₩</span><input type="number" placeholder="輸入韓幣..." oninput="calcCurrency(this.value)" class="w-full bg-gray-50 border border-gray-200 rounded-xl pl-8 pr-3 py-2.5 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-green-500 text-gray-900"></div>
+                                <i data-lucide="arrow-right-left" class="w-5 h-5 text-gray-300"></i>
+                                <div class="w-1/3 bg-green-50 border border-green-200 rounded-xl py-2.5 px-3 text-center"><span id="currencyResult" class="font-black text-green-700 text-sm">0 HKD</span></div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5">
+                            <div class="flex items-center mb-3"><i data-lucide="link" class="w-5 h-5 text-blue-600 mr-2"></i><h3 class="text-sm font-black text-gray-900">實用首爾捷徑</h3></div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <a href="https://weather.naver.com/" target="_blank" class="bg-blue-50 hover:bg-blue-100 text-blue-700 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center transition"><i data-lucide="cloud-sun" class="w-4 h-4 mr-1.5"></i> 首爾天氣</a>
+                                <a href="https://www.wowpass.io/" target="_blank" class="bg-orange-50 hover:bg-orange-100 text-orange-700 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center transition"><i data-lucide="credit-card" class="w-4 h-4 mr-1.5"></i> WOWPASS卡</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            lucide.createIcons();
+        }
+
+        // Area Menu
+        function renderAreaMenu() {
+            const main = document.getElementById('main-content');
+            if (!activeArea) {
+                let html = `<div class="mb-5 px-1"><h2 class="text-2xl font-black text-gray-900 tracking-tight">探索地區 (Areas)</h2><p class="text-sm text-gray-500 mt-1">精準鎖定首爾各地區美食與購物</p></div><div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden"><ul class="divide-y divide-gray-100">`;
+                areas.forEach((a, index) => {
+                    let highlightClass = index === 0 ? "bg-indigo-50/50 hover:bg-indigo-50" : "active:bg-gray-50";
+                    let iconColor = index === 0 ? "bg-indigo-100 text-indigo-600" : "bg-blue-50 text-blue-600";
+                    html += `<li onclick="activeArea='${a.id}'; renderContent()" class="p-4 flex items-center justify-between transition cursor-pointer ${highlightClass}"><div class="flex items-center"><div class="w-10 h-10 rounded-full ${iconColor} flex items-center justify-center mr-4"><i data-lucide="${a.icon}" class="w-5 h-5"></i></div><div><div class="font-black text-gray-900 text-[15px]">${a.name}</div><div class="text-xs ${index === 0 ? 'text-indigo-500 font-bold' : 'text-gray-400'} mt-0.5">${a.sub}</div></div></div><i data-lucide="chevron-right" class="w-5 h-5 text-gray-300"></i></li>`;
+                });
+                html += `</ul></div>`;
+                main.innerHTML = html;
+            } else {
+                const areaInfo = areas.find(a=>a.id===activeArea);
+                const areaFood = db.filter(p => p.area === activeArea || p.locEng?.includes(activeArea));
+                const areaShops = getAllShops().filter(p => p.area === activeArea || p.locCanto?.includes(activeArea) || p.locCanto?.includes(areaInfo.name.split('/')[0]));
+                
+                let html = `<div class="flex items-center mb-6 sticky top-[135px] z-30 bg-[var(--app-bg)] py-2" id="area-header"><button onclick="activeArea=null; renderContent()" class="bg-white p-2.5 rounded-full shadow-sm mr-3 active:scale-95 transition border border-gray-200"><i data-lucide="chevron-left" class="w-5 h-5 text-gray-600"></i></button><div><h2 class="text-xl font-black text-gray-900 tracking-tight">${areaInfo.name}</h2><p class="text-[11px] font-bold text-gray-500 uppercase tracking-wider">${areaFood.length + areaShops.length} 個推薦</p></div></div>`;
+                
+                if (areaFood.length > 0) {
+                    html += `<h3 class="font-black text-lg mb-3 mt-4 text-gray-800 px-1"><i data-lucide="utensils" class="w-5 h-5 inline mr-1 text-blue-600"></i> 推薦餐廳</h3>`;
+                    html += renderCards(areaFood);
+                }
+                if (areaShops.length > 0) {
+                    html += `<h3 class="font-black text-lg mb-3 mt-6 text-gray-800 px-1"><i data-lucide="shopping-bag" class="w-5 h-5 inline mr-1 text-pink-600"></i> 推薦購物</h3>`;
+                    html += renderCards(areaShops);
+                }
+                if (areaFood.length === 0 && areaShops.length === 0) {
+                    html += `<div class="text-center py-20"><p class="text-gray-500 font-bold">此區暫無推薦資料</p></div>`;
+                }
+
+                main.innerHTML = html;
+            }
+            lucide.createIcons();
+        }
+
+        function renderItinerary() {
+            const main = document.getElementById('main-content');
+            let html = `
+                <div class="mb-6 flex justify-between items-end px-1">
+                    <div><h2 class="text-2xl font-black text-gray-900 tracking-tight">我的行程 (Itinerary)</h2><p class="text-sm text-gray-500 mt-1">已標記 ${getSavedItemCount()} 個地點</p></div>
+                    <button onclick="openShareModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-2.5 rounded-xl text-[13px] font-bold shadow-md transition flex items-center active:scale-95"><i data-lucide="share" class="w-4 h-4 mr-1.5"></i> 導出</button>
+                </div>
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-200 mb-8 flex justify-between items-center">
+                    <div class="flex items-center"><div class="bg-indigo-50 p-2 rounded-lg mr-3"><i data-lucide="calendar-days" class="w-5 h-5 text-indigo-600"></i></div><div><span class="block font-black text-sm text-gray-900">行程天數</span><span class="block text-[11px] text-gray-400">${appState.tripStartDate ? '已同步主頁設定' : '手動增減'}</span></div></div>
+                    <div class="flex items-center bg-gray-50 rounded-full border border-gray-100 p-1"><button onclick="changeTotalDays(-1)" class="w-8 h-8 flex items-center justify-center rounded-full text-gray-600 font-bold active:bg-gray-200"><i data-lucide="minus" class="w-4 h-4"></i></button><span class="w-8 text-center font-black text-gray-900">${appState.totalDays}</span><button onclick="changeTotalDays(1)" class="w-8 h-8 flex items-center justify-center rounded-full text-gray-600 font-bold active:bg-gray-200"><i data-lucide="plus" class="w-4 h-4"></i></button></div>
+                </div>
+            `;
+
+            const unassignedFood = db.filter(p => appState.items[p.id] === 0);
+            const allShops = getAllShops();
+            const unassignedShops = allShops.filter(p => appState.shoppingItems[p.id] === 0);
+            
+            if (unassignedFood.length > 0 || unassignedShops.length > 0) {
+                html += `
+                <div class="sticky-section-header py-2 mb-4 flex justify-between items-center px-1">
+                    <h3 class="font-black text-lg flex items-center text-gray-700"><i data-lucide="inbox" class="w-5 h-5 mr-2"></i> 待安排 (Unassigned)</h3>
+                    <button onclick="smartAssignItinerary()" class="text-[11px] bg-indigo-100 text-indigo-700 font-bold px-2 py-1.5 rounded-lg border border-indigo-200 shadow-sm transition active:scale-95"><i data-lucide="wand-2" class="w-3 h-3 inline"></i> 智能分配</button>
+                </div>`;
+                if(unassignedFood.length > 0) html += renderCards(unassignedFood, 'saved');
+                if(unassignedShops.length > 0) html += renderCards(unassignedShops, 'saved');
+            }
+
+            for(let i=1; i<=appState.totalDays; i++) {
+                const dayFoodItems = db.filter(p => appState.items[p.id] === i);
+                const dayShopItems = allShops.filter(p => appState.shoppingItems[p.id] === i);
+                
+                let dateStr = "";
+                if (appState.tripStartDate) {
+                    const d = new Date(appState.tripStartDate);
+                    d.setDate(d.getDate() + (i - 1));
+                    dateStr = `<span class="text-sm font-normal text-gray-500 ml-2">(${d.getMonth()+1}/${d.getDate()})</span>`;
+                }
+
+                html += `<div class="sticky-section-header py-2 mt-6 mb-4 border-b border-gray-200 px-1"><h3 class="font-black text-lg flex items-center text-blue-700"><i data-lucide="calendar" class="w-5 h-5 mr-2"></i> Day ${i} ${dateStr}</h3></div>`;
+                
+                if (dayFoodItems.length > 0 || dayShopItems.length > 0) {
+                    if(dayFoodItems.length > 0) html += renderCards(dayFoodItems, 'saved');
+                    if(dayShopItems.length > 0) html += renderCards(dayShopItems, 'saved');
+                } else {
+                    html += `<div class="bg-white border border-dashed border-gray-300 rounded-xl p-6 text-center text-gray-400 text-sm font-bold mb-4 shadow-sm">這天還沒有安排行程哦</div>`;
+                }
+            }
+
+            if(getSavedItemCount() === 0) {
+                html += `<div class="text-center py-20"><i data-lucide="ghost" class="w-16 h-16 text-gray-300 mx-auto mb-4"></i><p class="text-gray-500 font-bold text-lg">行程是空的</p><p class="text-gray-400 text-sm mt-1">去「探索」或「購物」把它填滿吧！</p></div>`;
+            }
+
+            main.innerHTML = html;
+            lucide.createIcons();
+        }
+
+        // Logic routing
+        function renderContent() {
+            const term = document.getElementById('searchInput')?.value.toLowerCase() || '';
+            const searchContainer = document.getElementById('searchContainer');
+            const categoryFilters = document.getElementById('categoryFilters');
+            const headerRight = document.getElementById('headerRight');
+            const main = document.getElementById('main-content');
+            
+            if (currentTab === 'home') {
+                searchContainer.style.display = 'none'; categoryFilters.style.display = 'none'; headerRight.style.display = 'none';
+                renderHome();
+            }
+            else if (currentTab === 'explore') {
+                searchContainer.style.display = 'block'; categoryFilters.style.display = 'flex'; headerRight.style.display = 'block';
+                let data = db;
+                if(activeFilter !== 'AllFood') data = data.filter(p => p.catId === activeFilter);
+                if(term) data = data.filter(p => p.canto.toLowerCase().includes(term) || p.famCanto.includes(term) || p.locCanto.includes(term) || p.area?.toLowerCase().includes(term));
+                main.innerHTML = renderCards(data, 'explore');
+                lucide.createIcons();
+            } 
+            else if (currentTab === 'shopping') {
+                searchContainer.style.display = 'block'; categoryFilters.style.display = 'flex'; headerRight.style.display = 'block';
+                
+                headerRight.innerHTML = `
+                    <button onclick="openAddShopModal()" class="bg-blue-100 text-blue-700 hover:bg-blue-200 px-3 py-1.5 rounded-full text-xs font-bold transition flex items-center border border-blue-200 shadow-sm active:scale-95">
+                        <i data-lucide="plus" class="w-3.5 h-3.5 mr-1"></i> 新增店舖
+                    </button>
+                `;
+
+                let data = getAllShops();
+                if(activeShoppingFilter !== 'AllShop') data = data.filter(p => p.catId === activeShoppingFilter);
+                if(term) data = data.filter(p => p.canto.toLowerCase().includes(term) || p.locCanto?.toLowerCase().includes(term) || p.famCanto.toLowerCase().includes(term));
+                
+                main.innerHTML = renderCards(data, 'explore');
+                lucide.createIcons();
+            }
+            else if (currentTab === 'areas') {
+                searchContainer.style.display = 'none'; categoryFilters.style.display = 'none'; headerRight.style.display = 'none';
+                renderAreaMenu();
+            }
+            else if (currentTab === 'saved') {
+                searchContainer.style.display = 'none'; categoryFilters.style.display = 'none'; headerRight.style.display = 'none';
+                renderItinerary();
+            }
+            else if (currentTab === 'hacks') {
+                searchContainer.style.display = 'none'; categoryFilters.style.display = 'none'; headerRight.style.display = 'none';
+                
+                // FULL 100% RESTORED HACKS CONTENT AS REQUESTED
+                main.innerHTML = `
+                <div class="mb-6 px-1"><h2 class="text-2xl font-black text-gray-900 tracking-tight">首爾生存手冊 📖</h2><p class="text-sm text-gray-500 mt-1">系統管理員的生存法則與嚴格 ROI 分析</p></div>
+                <div class="space-y-6 pb-8">
+                    
+                    <!-- Hack 1: AREX -->
+                    <article class="app-card border border-gray-200">
+                        <div class="bg-gradient-to-r from-orange-500 to-amber-500 p-4 text-white flex items-center"><i data-lucide="train-front" class="w-6 h-6 mr-3"></i><h3 class="font-black text-lg">模塊 1：交通載具分析</h3></div>
+                        <div class="p-5">
+                            <p class="text-sm text-gray-700 mb-4 font-bold">從仁川機場進市區首爾站，機場快線 (AREX) 是唯一的邏輯正解（搭巴士容易塞車且貴）。這裡為你做精準的 ROI 比較：</p>
+                            <div class="overflow-hidden rounded-xl border border-gray-200 mb-4 text-xs">
+                                <table class="w-full text-left">
+                                    <thead class="bg-gray-50 text-gray-600">
+                                        <tr><th class="p-3 border-b font-bold">系統變數</th><th class="p-3 border-b border-l font-bold text-orange-600">AREX 直達車 (Express Train)</th><th class="p-3 border-b border-l font-bold">AREX 一般車 (All-Stop Train)</th></tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-100">
+                                        <tr><td class="p-3 font-bold">票價 (Cost)</td><td class="p-3 border-l text-orange-600 font-bold">約 11,000 KRW (需對號入座購票)</td><td class="p-3 border-l">約 4,150 - 4,750 KRW (直接刷 T-money 卡)</td></tr>
+                                        <tr><td class="p-3 font-bold">時間 (Time)</td><td class="p-3 border-l">43 分鐘 (T1出發) / 51 分鐘 (T2出發)</td><td class="p-3 border-l">59 分鐘 (T1出發) / 66 分鐘 (T2出發)</td></tr>
+                                        <tr><td class="p-3 font-bold">停靠站數</td><td class="p-3 border-l">0 站 (仁川直達首爾站)</td><td class="p-3 border-l">14 站 (每站都停)</td></tr>
+                                        <tr><td class="p-3 font-bold">座位硬體</td><td class="p-3 border-l">絨布獨立沙發座、指定席、有免費 Wi-Fi</td><td class="p-3 border-l">像普通捷運的長條椅、無指定席</td></tr>
+                                        <tr><td class="p-3 font-bold">首班車時間</td><td class="p-3 border-l">T1: 05:23 AM / T2: 05:15 AM</td><td class="p-3 border-l">T1: 05:25 AM / T2: 05:18 AM</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="bg-orange-50 rounded-xl p-4 border border-orange-100 text-sm">
+                                <div class="flex items-center text-orange-700 font-bold mb-2"><i data-lucide="lightbulb" class="w-4 h-4 mr-1.5"></i> 💡 系統管理員的終極建議：強烈建議選擇「直達車 (Express)」！</div>
+                                <p class="text-orange-800 leading-relaxed mb-2"><span class="font-bold">邏輯解析：</span> 你是剛搭完紅眼航班的狀態（極度疲勞）。如果搭「一般車」，因為大約早上 6 點多會經過金浦機場與弘大周邊，車上會湧入大量趕上班的韓國通勤族。你推著大行李箱在普通車廂裡會非常痛苦。多花大約 35 HKD 搭直達車，保證有座位睡覺，這是你這趟旅行 ROI 最高的一筆投資。</p>
+                                <p class="text-red-600 font-bold">(⚠️ 系統防呆警告：無論哪一種 AREX，都「不能」使用氣候同行卡，請務必現場買直達車票或使用 T-money 刷一般車。)</p>
+                            </div>
+                        </div>
+                    </article>
+
+                    <!-- Hack 2: T-money vs Climate Card -->
+                    <article class="app-card border border-gray-200">
+                        <div class="bg-gradient-to-r from-blue-600 to-cyan-500 p-4 text-white flex items-center"><i data-lucide="credit-card" class="w-6 h-6 mr-3"></i><h3 class="font-black text-lg">模塊 1(續)：金流與硬體邏輯</h3></div>
+                        <div class="p-5">
+                            <p class="text-sm text-gray-700 mb-4 font-bold">韓國近期針對觀光客推出了神級的 「氣候同行卡 (Climate Card Tourist Pass)」，但它並非在所有情況下都是最優解。我們來做一次嚴格的 ROI (投資報酬率) 計算。<br>基本數據： 首爾地鐵單程基礎票價為 1,400 KRW。</p>
+                            
+                            <div class="mb-4">
+                                <h4 class="font-black text-blue-700 mb-2 border-l-4 border-blue-500 pl-2">方案 A：氣候同行卡 (觀光客短期券)</h4>
+                                <ul class="space-y-2 text-sm text-gray-700">
+                                    <li><span class="font-bold">系統機制：</span> 在期限內，首爾市內的地鐵與公車「無限次搭乘吃到飽」。</li>
+                                    <li><span class="font-bold">價格參數：</span> 1日券(5,000韓元)、2日券(8,000韓元)、3日券(10,000韓元)、5日券(15,000韓元)。</li>
+                                    <li><span class="font-bold text-green-600">ROI 觸發點：</span> 只要你每天搭乘地鐵/公車超過 3 次，這張卡就開始幫你賺錢。</li>
+                                    <li><span class="font-bold text-red-600">致命限制 (Bug)：</span> 1. 不包含從仁川機場到市區的「機場快線 (AREX)」。 2. 如果你搭地鐵跨越了「首爾特別市」的邊界（例如去京畿道、南怡島），這張卡會失效，你必須在出站時找站務員補票。</li>
+                                </ul>
+                            </div>
+
+                            <div class="mb-5">
+                                <h4 class="font-black text-indigo-700 mb-2 border-l-4 border-indigo-500 pl-2">方案 B：傳統 T-money 卡</h4>
+                                <ul class="space-y-2 text-sm text-gray-700">
+                                    <li><span class="font-bold">系統機制：</span> 儲值型電子錢包（Pay-as-you-go）。</li>
+                                    <li><span class="font-bold text-indigo-600">系統優勢：</span> 涵蓋全韓國。從仁川機場搭快線、去釜山、在便利商店買水、甚至搭計程車都能「嗶」卡付款。完全不用動腦思考邊界問題。</li>
+                                </ul>
+                            </div>
+
+                            <div class="bg-blue-50 rounded-xl p-4 border border-blue-100 text-sm">
+                                <div class="flex items-center text-blue-700 font-bold mb-2"><i data-lucide="cpu" class="w-4 h-4 mr-1.5"></i> 💡 系統管理員的終極建議：</div>
+                                <p class="text-blue-900 leading-relaxed font-bold mb-2">「雙卡並行 (Dual-Card System)」是完美解法。</p>
+                                <p class="text-blue-800 leading-relaxed">買一張傳統 T-money 卡（空卡約 3,000 KRW），儲值少量金額（約 10,000 KRW），專門用來搭乘「機場快線」與「便利商店小額支付」。<br>針對你在首爾市區瘋狂跑點吃蛋糕、逛街的那 2 到 3 天，買一張 「氣候同行卡 (3日券)」，你可以毫無顧忌地進出捷運站，坐錯站也不怕浪費錢！</p>
+                            </div>
+                        </div>
+                    </article>
+
+                    <!-- Hack 3: Seoul Station Navigation -->
+                    <article class="app-card border border-gray-200">
+                        <div class="bg-gray-900 p-4 text-white flex items-center"><i data-lucide="map" class="w-6 h-6 mr-3 text-yellow-400"></i><h3 class="font-black text-lg">模塊 2：首爾站地下迷宮脫逃與防呆導航</h3></div>
+                        <div class="p-5 space-y-5 text-sm text-gray-800">
+                            <p class="font-bold">當你搭乘 AREX 抵達首爾站時，大約是早上 06:45 左右。既然你住在 Raum 169 (地址：中區世宗大路 4 街 21，靠近首爾站 4 號出口與崇禮門)，你每天都會進出這個迷宮。請啟動以下**「防迷路導航邏輯」**，並把這幾條物理法則寫入大腦：</p>
+                            
+                            <div class="border-l-4 border-indigo-500 pl-4 py-1">
+                                <h4 class="font-black text-lg mb-1 text-indigo-800">1. 垂直脫逃術 (Vertical Escape)：從地下 7 樓爬升</h4>
+                                <p class="mb-1"><span class="font-bold">物理現狀：</span> AREX 的月台深埋在首爾站的地下 7 樓 (B7)。</p>
+                                <p><span class="font-bold text-indigo-600">操作指令：</span> 下車後，不要跟著指標去換乘 1 號線或 4 號線。推著大行李換乘會走到崩潰。請直接尋找寫著 「出站 (Way Out) / 首爾站廣場 (Seoul Station Plaza)」 的電梯或超長手扶梯，一路垂直爬升到 地下 1 樓或地面 1 樓 的大廳。</p>
+                            </div>
+
+                            <div class="border-l-4 border-yellow-500 pl-4 py-1">
+                                <h4 class="font-black text-lg mb-1 text-yellow-800">2. 鎖定「4號出口」絕對座標</h4>
+                                <p class="mb-1"><span class="font-bold">操作指令：</span> 出站到寬闊的大廳後，尋找黃色指標的 「地鐵 1, 4 號線 (Subway Line 1, 4)」 方向，沿著通道走，找到 「Exit 4 (4號出口)」。</p>
+                                <p class="mb-1"><span class="font-bold text-red-600">致命錯誤：</span> 不要隨便找個出口出站，打算「到地面上再導航走過去」。首爾站周邊有巨大的馬路和高架橋，地面上是無法輕易穿越的。</p>
+                                <p class="mb-1"><span class="font-bold text-green-600">正確操作：</span> 在地下通道裡死死盯著黃色的「Exit 4」指標，走到完全正確的出口再爬上地面。</p>
+                                <p><span class="font-bold text-gray-500">輔助提示：</span> 4 號出口有電扶梯，對推行李的人非常友善。</p>
+                            </div>
+
+                            <div class="border-l-4 border-blue-500 pl-4 py-1">
+                                <h4 class="font-black text-lg mb-1 text-blue-800">法則 1：無視文字，啟動「色彩追蹤演算法 (Color-Tracking)」</h4>
+                                <p class="mb-1">首爾地鐵的站內標示非常繁雜，外國人看英文會非常痛苦。</p>
+                                <p><span class="font-bold text-blue-600">解法：</span> 首爾站的地板和天花板都有巨大的彩色引導線。<br>
+                                • <span class="font-bold bg-[#0052A4] text-white px-1 rounded">1 號線 = 深藍色 (Dark Blue)</span><br>
+                                • <span class="font-bold bg-[#00A5DE] text-white px-1 rounded">4 號線 = 淺藍色 (Light Blue)</span><br>
+                                • <span class="font-bold bg-[#F37321] text-white px-1 rounded">機場快線 AREX = 橘色/青藍色 (Orange/Cyan)</span><br>
+                                只要低著頭，踩著對應顏色的線走，你絕對不會迷路。</p>
+                            </div>
+
+                            <div class="border-l-4 border-gray-400 pl-4 py-1">
+                                <h4 class="font-black text-lg mb-1 text-gray-800">法則 3：換乘距離極度漫長 (The Transfer Distance Buffer)</h4>
+                                <p class="mb-1">在首爾站，從 1 號線換乘到 4 號線，或是從地鐵換乘到機場快線，通常需要步行 5 到 10 分鐘（包含爬樓梯與極長的手扶梯）。</p>
+                                <p><span class="font-bold">邏輯提示：</span> 在計算行程時間時，請務必把這「10分鐘的站內步行時間」加入你的運算變數中，不要把時間抓得太死。</p>
+                            </div>
+
+                            <div class="border-l-4 border-emerald-500 pl-4 py-1 bg-emerald-50 rounded-r-xl">
+                                <h4 class="font-black text-lg mb-2 text-emerald-800 pt-2">3. 地面最後衝刺 (Surface Navigation to Raum 169)</h4>
+                                <p class="mb-2 font-bold text-emerald-900">從 4 號出口上來後，請完全按照這條直線邏輯走（約 4-5 分鐘）：</p>
+                                <ul class="space-y-1.5">
+                                    <li><span class="font-bold">步驟 A：</span> 一出 4 號出口，面對大馬路 (世宗大路 Sejong-daero)，向右轉 (往北走)。你會看到遠方巨大的傳統城門「崇禮門 (南大門)」。</li>
+                                    <li><span class="font-bold">步驟 B：</span> 沿著這條寬闊的馬路直走約 250 公尺，你會經過一棟巨大的現代玻璃帷幕大樓 (Grand Central)。</li>
+                                    <li><span class="font-bold">步驟 C：</span> 經過大樓後，注意右手邊的第一或第二條小巷子，那條就是 「世宗大路 4 街 (Sejong-daero 4-gil)」。</li>
+                                    <li><span class="font-bold text-emerald-700">步驟 D：</span> 右轉轉進巷子裡，Raum 169 飯店就在你的眼前！</li>
+                                </ul>
+                                <div class="pb-2"></div>
+                            </div>
+
+                        </div>
+                    </article>
+                </div>`;
+                lucide.createIcons();
+            }
+
+            adjustMainPadding();
+        }
+
+        window.switchTab = (tab) => {
+            currentTab = tab;
+            ['home', 'explore', 'shopping', 'areas', 'hacks', 'saved'].forEach(t => {
+                const btn = document.getElementById(`nav-${t}`);
+                if(btn) {
+                    btn.classList.toggle('text-blue-600', tab === t);
+                    btn.classList.toggle('text-gray-400', tab !== t);
+                }
+            });
+
+            const titles = {
+                home: { t: "首爾行前準備 📝", s: "Trip Dashboard" },
+                explore: { t: "首爾搵食指南 🇰🇷", s: "Explore Seoul" },
+                shopping: { t: "血拼地圖 🛍️", s: "Seoul Shopping Guide" },
+                areas: { t: "分區尋找 🗺️", s: "Browse by Area" },
+                hacks: { t: "首爾生存手冊 📖", s: "Seoul Pro Hacks" },
+                saved: { t: "行程規劃 🎒", s: "Itinerary Planner" }
+            };
+            document.getElementById('headerTitle').innerText = titles[tab].t;
+            document.getElementById('headerSub').innerText = titles[tab].s;
+
+            const headerRight = document.getElementById('headerRight');
+            headerRight.innerHTML = `<span class="text-xs font-bold text-gray-400" id="headerCount">Total ${db.length} Places</span>`;
+
+            if(tab === 'explore') renderFilters();
+            if(tab === 'shopping') renderShoppingFilters();
+            if(tab !== 'areas') activeArea = null; 
+            
+            renderContent();
+            window.scrollTo(0,0);
+        };
+
+        // Init
+        document.getElementById('searchInput').addEventListener('input', renderContent);
+        updateSavedBadge();
+        switchTab('home');
+    </script>
+</body>
+</html>
